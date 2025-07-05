@@ -20,49 +20,53 @@ class BookListAPIView(generics.ListAPIView):
     filter_backends = [DjangoFilterBackend, OrderingFilter]
 
     def get_queryset(self):
-        queryset = super().get_queryset()
+        try:
+            queryset = super().get_queryset()
 
-        author = self.request.query_params.get('author')
-        title = self.request.query_params.get('title')
-        language = self.request.query_params.getlist('language')
-        mime_type = self.request.query_params.get('mime_type')
-        topic = self.request.query_params.get('topic')
-        gutenberg_ids = self.request.query_params.getlist('gutenberg_id')
+            author = self.request.query_params.get('author')
+            title = self.request.query_params.get('title')
+            language = self.request.query_params.getlist('language')
+            mime_type = self.request.query_params.get('mime_type')
+            topic = self.request.query_params.get('topic')
+            gutenberg_ids = self.request.query_params.getlist('gutenberg_id')
 
-        if author:
-            queryset = queryset.filter(
-                booksbookauthors__author__name__icontains=author
+            if author:
+                queryset = queryset.filter(
+                    booksbookauthors__author__name__icontains=author
+                )
+
+            if title:
+                queryset = queryset.filter(title__icontains=title)
+
+            if gutenberg_ids:
+                id_list = [int(gid.strip()) for gid in gutenberg_ids if gid.strip().isdigit()]
+                if not id_list:
+                    return BooksBook.objects.none() 
+                queryset = queryset.filter(gutenberg_id__in=id_list)
+
+            if language:
+                queryset = queryset.filter(
+                    booksbooklanguages__language__code__in=language
+                )
+
+            if mime_type:
+                queryset = queryset.filter(
+                    booksformat__mime_type__icontains=mime_type
+                )
+
+            if topic:
+                queryset = queryset.filter(
+                    Q(booksbooksubjects__subject__name__icontains=topic) |
+                    Q(booksbookbookshelves__bookshelf__name__icontains=topic)
+                )
+
+            return queryset.distinct().prefetch_related(
+                'booksbookauthors_set__author',
+                'booksbookbookshelves_set__bookshelf',
+                'booksbooksubjects_set__subject',
+                'booksbooklanguages_set__language',
+                'booksformat_set'
             )
-
-        if title:
-            queryset = queryset.filter(title__icontains=title)
-
-        if gutenberg_ids:
-            id_list = [int(gid.strip()) for gid in gutenberg_ids if gid.strip().isdigit()]
-            if not id_list:
-                return BooksBook.objects.none() 
-            queryset = queryset.filter(gutenberg_id__in=id_list)
-
-        if language:
-            queryset = queryset.filter(
-                booksbooklanguages__language__code__in=language
-            )
-
-        if mime_type:
-            queryset = queryset.filter(
-                booksformat__mime_type__icontains=mime_type
-            )
-
-        if topic:
-            queryset = queryset.filter(
-                Q(booksbooksubjects__subject__name__icontains=topic) |
-                Q(booksbookbookshelves__bookshelf__name__icontains=topic)
-            )
-
-        return queryset.distinct().prefetch_related(
-            'booksbookauthors_set__author',
-            'booksbookbookshelves_set__bookshelf',
-            'booksbooksubjects_set__subject',
-            'booksbooklanguages_set__language',
-            'booksformat_set'
-        )
+        except Exception as e:
+            print(e)
+            return BooksBook.objects.none()
