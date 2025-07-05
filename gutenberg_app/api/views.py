@@ -1,5 +1,3 @@
-from django.shortcuts import render
-
 from rest_framework import generics
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter
@@ -40,7 +38,10 @@ class BookListAPIView(generics.ListAPIView):
             queryset = queryset.filter(title__icontains=title)
 
         if gutenberg_ids:
-            queryset = queryset.filter(gutenberg_id__in=gutenberg_ids)
+            id_list = [int(gid.strip()) for gid in gutenberg_ids if gid.strip().isdigit()]
+            if not id_list:
+                return BooksBook.objects.none() 
+            queryset = queryset.filter(gutenberg_id__in=id_list)
 
         if language:
             queryset = queryset.filter(
