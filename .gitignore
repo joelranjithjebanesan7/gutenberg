@@ -1,0 +1,41 @@
+# Python
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+*.swp
+.Python
+
+# Virtual environment
+.venv/
+venv/
+ENV/
+env/
+
+# Environment variables
+.env
+.env.*
+
+# VS Code
+.vscode/
+
+# macOS / Linux
+.DS_Store
+
+# Migrations (optional)
+*/migrations/*.py
+*/migrations/*.pyc
+
+# Django stuff:
+db.sqlite3
+media/
+staticfiles/
+
+# Logs
+*.log
+
+# Coverage
+htmlcov/
+.coverage
+.cache
+.pytest_cache/
